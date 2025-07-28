@@ -1,0 +1,299 @@
+{
+  "info": {
+    "title": "AgentHub Registry API - Sample Requests",
+    "description": "Sample API requests for testing the AgentHub Registry with CLI tools",
+    "version": "1.0.0"
+  },
+  "requests": [
+    {
+      "name": "Get API Info",
+      "method": "GET",
+      "url": "/api",
+      "description": "Get basic API information",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Health Check",
+      "method": "GET", 
+      "url": "/health",
+      "description": "Basic health check",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Detailed Health Check",
+      "method": "GET",
+      "url": "/api/v1/health/detailed",
+      "description": "Detailed health check with component status",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Initiate GitHub OAuth",
+      "method": "GET",
+      "url": "/api/v1/auth/github",
+      "description": "Get GitHub OAuth URL",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Search Packages",
+      "method": "GET",
+      "url": "/api/v1/search/?q=tool&limit=5",
+      "description": "Search for packages containing 'tool'",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Search by Package Type",
+      "method": "GET",
+      "url": "/api/v1/search/?q=ai&package_type=agent&limit=5",
+      "description": "Search for AI agents",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Get Popular Packages",
+      "method": "GET",
+      "url": "/api/v1/search/popular?limit=10",
+      "description": "Get most popular packages",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Get Recent Packages",
+      "method": "GET",
+      "url": "/api/v1/search/recent?limit=10",
+      "description": "Get recently published packages",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Get Trending Packages",
+      "method": "GET",
+      "url": "/api/v1/search/trending?limit=10",
+      "description": "Get trending packages",
+      "expected_status": 200,
+      "auth_required": false
+    },
+    {
+      "name": "Get Package Details",
+      "method": "GET",
+      "url": "/api/v1/packages/example-tool",
+      "description": "Get details for a specific package",
+      "expected_status": [200, 404],
+      "auth_required": false,
+      "notes": "404 is expected if package doesn't exist"
+    },
+    {
+      "name": "Get Package Versions",
+      "method": "GET",
+      "url": "/api/v1/packages/example-tool/versions",
+      "description": "Get all versions of a package",
+      "expected_status": [200, 404],
+      "auth_required": false
+    },
+    {
+      "name": "Get Specific Version",
+      "method": "GET",
+      "url": "/api/v1/packages/example-tool/1.0.0",
+      "description": "Get details for a specific package version",
+      "expected_status": [200, 404],
+      "auth_required": false
+    },
+    {
+      "name": "Download Package",
+      "method": "GET",
+      "url": "/api/v1/packages/example-tool/1.0.0/download",
+      "description": "Download a package file",
+      "expected_status": [200, 404],
+      "auth_required": false,
+      "response_type": "binary"
+    },
+    {
+      "name": "Get Package Stats",
+      "method": "GET",
+      "url": "/api/v1/packages/example-tool/stats",
+      "description": "Get package download statistics",
+      "expected_status": [200, 404],
+      "auth_required": false
+    },
+    {
+      "name": "Get User Profile",
+      "method": "GET",
+      "url": "/api/v1/users/testuser",
+      "description": "Get user profile information",
+      "expected_status": [200, 404],
+      "auth_required": false
+    },
+    {
+      "name": "Get User Packages",
+      "method": "GET",
+      "url": "/api/v1/users/testuser/packages",
+      "description": "Get packages owned by a user",
+      "expected_status": [200, 404],
+      "auth_required": false
+    },
+    {
+      "name": "Get Current User (Auth Required)",
+      "method": "GET",
+      "url": "/api/v1/auth/me",
+      "description": "Get current authenticated user info",
+      "expected_status": [200, 401],
+      "auth_required": true,
+      "notes": "401 expected without valid token"
+    },
+    {
+      "name": "Publish Package (Auth Required)",
+      "method": "POST",
+      "url": "/api/v1/packages/publish",
+      "description": "Publish a new package",
+      "expected_status": [200, 401, 403],
+      "auth_required": true,
+      "content_type": "multipart/form-data",
+      "notes": "Requires file upload and authentication"
+    },
+    {
+      "name": "Logout (Auth Required)",
+      "method": "POST",
+      "url": "/api/v1/auth/logout",
+      "description": "Logout current user",
+      "expected_status": [200, 401],
+      "auth_required": true
+    }
+  ],
+  "test_scenarios": [
+    {
+      "name": "Unauthenticated User Journey",
+      "description": "Test the complete flow for an unauthenticated user",
+      "steps": [
+        "Get API Info",
+        "Health Check",
+        "Search Packages",
+        "Get Popular Packages",
+        "Get Package Details",
+        "Download Package"
+      ]
+    },
+    {
+      "name": "Package Discovery Flow",
+      "description": "Test package search and discovery features",
+      "steps": [
+        "Search Packages",
+        "Search by Package Type", 
+        "Get Popular Packages",
+        "Get Recent Packages",
+        "Get Trending Packages"
+      ]
+    },
+    {
+      "name": "Package Details Flow",
+      "description": "Test retrieving detailed package information",
+      "steps": [
+        "Get Package Details",
+        "Get Package Versions",
+        "Get Specific Version",
+        "Get Package Stats",
+        "Download Package"
+      ]
+    },
+    {
+      "name": "Authentication Flow",
+      "description": "Test authentication-related endpoints",
+      "steps": [
+        "Initiate GitHub OAuth",
+        "Get Current User (Auth Required)",
+        "Logout (Auth Required)"
+      ]
+    }
+  ],
+  "environment_variables": {
+    "development": {
+      "BASE_URL": "http://localhost:8000",
+      "ACCESS_TOKEN": "your-jwt-token-here"
+    },
+    "production": {
+      "BASE_URL": "https://registry.agenthubcli.com",
+      "ACCESS_TOKEN": "your-jwt-token-here"
+    }
+  },
+  "cli_examples": {
+    "curl": {
+      "search_packages": "curl 'http://localhost:8000/api/v1/search/?q=tool&limit=5'",
+      "get_package": "curl 'http://localhost:8000/api/v1/packages/example-tool'",
+      "download_package": "curl -L 'http://localhost:8000/api/v1/packages/example-tool/1.0.0/download' -o package.tar.gz",
+      "authenticated_request": "curl -H 'Authorization: Bearer $ACCESS_TOKEN' 'http://localhost:8000/api/v1/auth/me'"
+    },
+    "httpie": {
+      "search_packages": "http GET localhost:8000/api/v1/search/ q==tool limit==5",
+      "get_package": "http GET localhost:8000/api/v1/packages/example-tool",
+      "download_package": "http --download GET localhost:8000/api/v1/packages/example-tool/1.0.0/download",
+      "authenticated_request": "http GET localhost:8000/api/v1/auth/me Authorization:'Bearer $ACCESS_TOKEN'"
+    },
+    "agenthub_cli": {
+      "search": "agenthub search tool --limit 5",
+      "install": "agenthub install tool:example-tool@1.0.0",
+      "publish": "agenthub publish my-package.tar.gz --type tool",
+      "login": "agenthub login"
+    }
+  },
+  "response_examples": {
+    "api_info": {
+      "service": "AgentHub Registry",
+      "version": "1.0.0",
+      "api_version": "v1",
+      "description": "Universal package registry for AI-native components"
+    },
+    "health_check": {
+      "status": "healthy",
+      "service": "agenthub-registry"
+    },
+    "search_results": {
+      "results": [
+        {
+          "id": 1,
+          "name": "example-tool",
+          "description": "An example AI tool",
+          "package_type": "tool",
+          "latest_version": "1.0.0",
+          "total_downloads": 1234,
+          "owner": {
+            "github_username": "testuser",
+            "display_name": "Test User"
+          }
+        }
+      ],
+      "total": 1,
+      "limit": 5,
+      "offset": 0,
+      "query": "tool"
+    },
+    "package_details": {
+      "package": {
+        "id": 1,
+        "name": "example-tool",
+        "description": "An example AI tool",
+        "package_type": "tool",
+        "latest_version": "1.0.0",
+        "total_downloads": 1234
+      },
+      "owner": {
+        "github_username": "testuser",
+        "display_name": "Test User"
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "download_count": 1234,
+          "file_size": 2048576,
+          "published_at": "2024-01-01T00:00:00Z"
+        }
+      ]
+    },
+    "error_response": {
+      "detail": "Package not found",
+      "error_code": "PACKAGE_NOT_FOUND"
+    }
+  }
+} 

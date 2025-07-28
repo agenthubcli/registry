@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentHub Registry - Universal Package Manager for AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            <i class="fas fa-cube text-blue-600 mr-2"></i>
+                            AgentHub Registry
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="showLoginModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                        <i class="fab fa-github mr-2"></i>Login with GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
+                Universal Package Manager for AI
+            </h2>
+            <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                Discover, publish, and manage AI-native agents, tools, chains, and prompts. 
+                The central hub for the AI development community.
+            </p>
+            
+            <!-- Search Bar -->
+            <div class="max-w-2xl mx-auto">
+                <div class="relative">
+                    <input 
+                        id="searchInput"
+                        type="text" 
+                        placeholder="Search packages..."
+                        class="w-full px-6 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-12"
+                        onkeypress="handleSearch(event)"
+                    >
+                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <button 
+                        onclick="searchPackages()"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Package Type Filters -->
+            <div class="mt-6 flex flex-wrap justify-center gap-2">
+                <button onclick="filterByType('all')" class="filter-btn active" data-type="all">All</button>
+                <button onclick="filterByType('agent')" class="filter-btn" data-type="agent">Agents</button>
+                <button onclick="filterByType('tool')" class="filter-btn" data-type="tool">Tools</button>
+                <button onclick="filterByType('chain')" class="filter-btn" data-type="chain">Chains</button>
+                <button onclick="filterByType('prompt')" class="filter-btn" data-type="prompt">Prompts</button>
+                <button onclick="filterByType('dataset')" class="filter-btn" data-type="dataset">Datasets</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button onclick="showTab('popular')" class="tab-btn active" data-tab="popular">
+                    <i class="fas fa-fire mr-2"></i>Popular
+                </button>
+                <button onclick="showTab('recent')" class="tab-btn" data-tab="recent">
+                    <i class="fas fa-clock mr-2"></i>Recent
+                </button>
+                <button onclick="showTab('trending')" class="tab-btn" data-tab="trending">
+                    <i class="fas fa-trending-up mr-2"></i>Trending
+                </button>
+            </nav>
+        </div>
+
+        <!-- Package Results -->
+        <div id="packageResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Loading state -->
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Loading packages...</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="mt-8 flex justify-center hidden">
+            <div class="flex space-x-2">
+                <button onclick="loadPage(currentPage - 1)" id="prevBtn" class="px-4 py-2 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>
+                    Previous
+                </button>
+                <span id="pageInfo" class="px-4 py-2">Page 1 of 1</span>
+                <button onclick="loadPage(currentPage + 1)" id="nextBtn" class="px-4 py-2 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <h3 class="text-xl font-bold mb-4">Login to AgentHub Registry</h3>
+                <p class="text-gray-600 mb-6">Sign in with your GitHub account to publish packages and manage your profile.</p>
+                <button onclick="loginWithGitHub()" class="w-full bg-gray-900 text-white py-3 px-4 rounded-md hover:bg-gray-800 transition mb-4">
+                    <i class="fab fa-github mr-2"></i>Continue with GitHub
+                </button>
+                <button onclick="hideLoginModal()" class="text-gray-500 hover:text-gray-700">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentTab = 'popular';
+        let currentType = 'all';
+        let currentPage = 1;
+        let totalPages = 1;
+        const API_BASE = '/api/v1';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPackages();
+        });
+
+        // Search functionality
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                searchPackages();
+            }
+        }
+
+        function searchPackages() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                loadSearchResults(query);
+            } else {
+                loadPackages();
+            }
+        }
+
+        async function loadSearchResults(query) {
+            try {
+                const typeParam = currentType !== 'all' ? `&package_type=${currentType}` : '';
+                const response = await fetch(`${API_BASE}/search/?q=${encodeURIComponent(query)}${typeParam}&limit=20&offset=${(currentPage - 1) * 20}`);
+                const data = await response.json();
+                
+                displayPackages(data.results);
+                updatePagination(data.total, 20);
+            } catch (error) {
+                console.error('Search failed:', error);
+                showError('Failed to search packages');
+            }
+        }
+
+        // Tab functionality
+        function showTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+            
+            // Update tab UI
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            
+            loadPackages();
+        }
+
+        // Filter functionality
+        function filterByType(type) {
+            currentType = type;
+            currentPage = 1;
+            
+            // Update filter UI
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-type="${type}"]`).classList.add('active');
+            
+            loadPackages();
+        }
+
+        // Load packages based on current tab and filters
+        async function loadPackages() {
+            try {
+                let endpoint;
+                const typeParam = currentType !== 'all' ? `?package_type=${currentType}` : '?';
+                const limitParam = `${currentType !== 'all' ? '&' : ''}limit=20`;
+                
+                switch (currentTab) {
+                    case 'popular':
+                        endpoint = `${API_BASE}/search/popular${typeParam}${limitParam}`;
+                        break;
+                    case 'recent':
+                        endpoint = `${API_BASE}/search/recent${typeParam}${limitParam}`;
+                        break;
+                    case 'trending':
+                        endpoint = `${API_BASE}/search/trending${typeParam}${limitParam}`;
+                        break;
+                    default:
+                        endpoint = `${API_BASE}/search/popular${typeParam}${limitParam}`;
+                }
+                
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                displayPackages(data.results);
+                updatePagination(data.results.length, 20);
+            } catch (error) {
+                console.error('Failed to load packages:', error);
+                showError('Failed to load packages');
+            }
+        }
+
+        // Display packages
+        function displayPackages(packages) {
+            const container = document.getElementById('packageResults');
+            
+            if (packages.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">No packages found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = packages.map(pkg => `
+                <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition p-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <h3 class="text-lg font-semibold text-gray-900">${pkg.name}</h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ${pkg.package_type}
+                        </span>
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                        ${pkg.description || 'No description available'}
+                    </p>
+                    
+                    <div class="flex items-center justify-between text-sm text-gray-500">
+                        <div class="flex items-center">
+                            <img src="${pkg.owner?.github_avatar_url || 'https://github.com/identicons/default.png'}" 
+                                 alt="${pkg.owner?.github_username}" 
+                                 class="w-5 h-5 rounded-full mr-2">
+                            <span>${pkg.owner?.github_username}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-download mr-1"></i>
+                            <span>${pkg.total_downloads.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex space-x-2">
+                        <button onclick="viewPackage('${pkg.name}')" class="flex-1 bg-blue-600 text-white text-sm py-2 px-3 rounded hover:bg-blue-700 transition">
+                            View Details
+                        </button>
+                        <button onclick="installPackage('${pkg.name}')" class="bg-gray-100 text-gray-700 text-sm py-2 px-3 rounded hover:bg-gray-200 transition">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Pagination
+        function updatePagination(total, limit) {
+            totalPages = Math.ceil(total / limit);
+            
+            const pagination = document.getElementById('pagination');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+            
+            if (totalPages > 1) {
+                pagination.classList.remove('hidden');
+                pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                prevBtn.disabled = currentPage <= 1;
+                nextBtn.disabled = currentPage >= totalPages;
+            } else {
+                pagination.classList.add('hidden');
+            }
+        }
+
+        function loadPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                loadPackages();
+            }
+        }
+
+        // Package actions
+        function viewPackage(name) {
+            window.open(`/package/${name}`, '_blank');
+        }
+
+        function installPackage(name) {
+            navigator.clipboard.writeText(`agenthub install ${name}`);
+            showMessage('Install command copied to clipboard!');
+        }
+
+        // Authentication
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        async function loginWithGitHub() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/github`);
+                const data = await response.json();
+                window.location.href = data.oauth_url;
+            } catch (error) {
+                console.error('Login failed:', error);
+                showError('Failed to initiate login');
+            }
+        }
+
+        // Utility functions
+        function showMessage(message) {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function showError(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+    </script>
+
+    <style>
+        .filter-btn {
+            @apply px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition;
+        }
+        
+        .filter-btn.active {
+            @apply bg-blue-600 text-white border-blue-600;
+        }
+        
+        .tab-btn {
+            @apply py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300;
+        }
+        
+        .tab-btn.active {
+            @apply border-blue-500 text-blue-600;
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</body>
+</html> 

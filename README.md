@@ -55,8 +55,6 @@ Think of it as "npm for AI" – but specifically designed for the unique needs o
 - **Search**: Elasticsearch for fast package discovery
 - **Authentication**: GitHub OAuth 2.0
 - **Storage**: Object storage for package artifacts
-- **Deployment**: Docker + Kubernetes
-- **Monitoring**: Prometheus + Grafana
 
 ## 📚 API Documentation
 

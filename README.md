@@ -82,7 +82,22 @@ metadata:
   version: "1.2.0"
   description: "AI agent for data analysis and insights"
   author: "jane@example.com"
-  tags: ["data", "analytics", "python"]
+  license: "MIT"
+  runtime: "python"
+  entry_point: "main.py"
+  dependencies:
+    pandas-tool: "^2.0.0"
+    chart-generator: "^1.5.0"
+    data-validator: "~1.0.0"
+  environment:
+    PYTHON_VERSION: "3.9+"
+    MAX_MEMORY: "2GB"
+    TIMEOUT: "300"
+  config:
+    max_rows: 100000
+    output_format: "json"
+    enable_caching: true
+  tags: ["data", "analytics", "python", "pandas"]
 ```
 
 ```yaml
@@ -92,8 +107,42 @@ spec_version: "1.0"
 metadata:
   name: "web-scraper"
   version: "0.5.0"
-  description: "Intelligent web scraping tool"
+  description: "Intelligent web scraping tool with rate limiting"
+  author: "dev@example.com"
+  license: "Apache-2.0"
   runtime: "python"
+  entry_point: "scraper.py"
+  schema:
+    input:
+      url:
+        type: "string"
+        description: "URL to scrape"
+        required: true
+      selector:
+        type: "string"
+        description: "CSS selector for elements"
+        required: false
+        default: "body"
+      wait_time:
+        type: "integer"
+        description: "Wait time between requests (ms)"
+        required: false
+        default: 1000
+    output:
+      content:
+        type: "string"
+        description: "Scraped content"
+      elements:
+        type: "array"
+        description: "List of scraped elements"
+      metadata:
+        type: "object"
+        description: "Scraping metadata"
+  config:
+    user_agent: "AgentHub-Scraper/1.0"
+    max_retries: 3
+    timeout: 30
+  tags: ["web", "scraping", "data-extraction"]
 ```
 
 ```yaml
@@ -103,8 +152,139 @@ spec_version: "1.0"
 metadata:
   name: "customer-support-flow"
   version: "2.1.0"
-  description: "Multi-step customer support automation"
-  components: ["classifier@1.0.0", "responder@2.0.0"]
+  description: "Multi-step customer support automation chain"
+  author: "support-team@example.com"
+  license: "MIT"
+  steps:
+    - name: "classify_intent"
+      type: "agent"
+      package: "intent-classifier@1.0.0"
+      config:
+        confidence_threshold: 0.8
+      inputs:
+        message: "{{user_input}}"
+      outputs:
+        intent: "classified_intent"
+        confidence: "classification_confidence"
+    - name: "route_to_specialist"
+      type: "tool"
+      package: "routing-tool@2.1.0"
+      condition: "{{classification_confidence}} > 0.8"
+      config:
+        fallback_queue: "general_support"
+      inputs:
+        intent: "{{classified_intent}}"
+        priority: "{{user_priority}}"
+      outputs:
+        specialist_id: "assigned_specialist"
+        queue_position: "queue_pos"
+    - name: "generate_response"
+      type: "prompt"
+      package: "support-response@1.5.0"
+      inputs:
+        intent: "{{classified_intent}}"
+        specialist: "{{assigned_specialist}}"
+        context: "{{conversation_history}}"
+      outputs:
+        response: "generated_response"
+  config:
+    max_execution_time: 120
+    retry_failed_steps: true
+    log_level: "info"
+  tags: ["customer-support", "automation", "nlp", "workflow"]
+```
+
+````yaml
+# Prompt Package
+type: prompt
+spec_version: "1.0"
+metadata:
+  name: "code-reviewer"
+  version: "1.0.0"
+  description: "AI prompt for code review assistance"
+  author: "developer@example.com"
+  license: "MIT"
+  template: |
+    You are an expert code reviewer. Please review the following code:
+
+    ```{{language}}
+    {{code}}
+    ```
+
+    Focus on: {{focus_areas}}
+    Provide feedback on: {{feedback_type}}
+  variables:
+    - name: "language"
+      type: "string"
+      description: "Programming language of the code"
+      required: true
+    - name: "code"
+      type: "string"
+      description: "Code to be reviewed"
+      required: true
+    - name: "focus_areas"
+      type: "string"
+      description: "Areas to focus the review on"
+      required: false
+      default: "security, performance, readability"
+    - name: "feedback_type"
+      type: "string"
+      description: "Type of feedback to provide"
+      required: false
+      default: "constructive suggestions"
+  examples:
+    - name: "python_function_review"
+      inputs:
+        language: "python"
+        code: "def add(a, b): return a + b"
+        focus_areas: "type hints, documentation"
+      expected: "Consider adding type hints and a docstring..."
+  tags: ["code-review", "ai-assistant", "development"]
+````
+
+```yaml
+# Dataset Package
+type: dataset
+spec_version: "1.0"
+metadata:
+  name: "customer-feedback"
+  version: "2.0.0"
+  description: "Customer feedback dataset for sentiment analysis"
+  author: "data-team@example.com"
+  license: "CC-BY-4.0"
+  format: "csv"
+  schema:
+    columns:
+      - name: "feedback_id"
+        type: "integer"
+        description: "Unique feedback identifier"
+        nullable: false
+      - name: "customer_id"
+        type: "string"
+        description: "Customer identifier"
+        nullable: false
+      - name: "feedback_text"
+        type: "string"
+        description: "Customer feedback content"
+        nullable: false
+      - name: "sentiment_score"
+        type: "float"
+        description: "Sentiment score (-1 to 1)"
+        nullable: true
+      - name: "created_at"
+        type: "datetime"
+        description: "Feedback creation timestamp"
+        nullable: false
+  files:
+    - name: "feedback_2023.csv"
+      path: "data/feedback_2023.csv"
+      size: 15728640
+      hash: "sha256:a8b2c3d4e5f6..."
+    - name: "feedback_2024.csv"
+      path: "data/feedback_2024.csv"
+      size: 18291456
+      hash: "sha256:f6e5d4c3b2a1..."
+  tags: ["sentiment", "customer-data", "nlp", "machine-learning"]
 ```
 
 ### Example API Usage

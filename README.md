@@ -27,14 +27,13 @@ Think of it as "npm for AI" – but specifically designed for the unique needs o
 
 ### 🎯 Current Features
 
+### 🚧 In Development
+
 - [ ] **Package Storage & Retrieval** - Store and serve AI packages with metadata
 - [ ] **Search API** - Fast, semantic search across all packages
 - [ ] **Version Management** - Full semantic versioning support
 - [ ] **RESTful API** - Clean, documented API endpoints
 - [ ] **Package Validation** - Schema validation for all package types
-
-### 🚧 In Development
-
 - [ ] **Web UI** - Beautiful public interface for browsing packages
 - [ ] **GitHub OAuth** - Secure authentication for publishing
 - [ ] **Advanced Search** - Filter by type, tags, popularity, etc.

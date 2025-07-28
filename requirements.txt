@@ -5,14 +5,14 @@ gunicorn==21.2.0
 
 # Database
 asyncpg==0.29.0
-sqlalchemy==2.0.23
-alembic==1.12.1
+sqlalchemy==2.0.32
+alembic==1.13.2
 
 # Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
-httpx==0.25.2
+httpx==0.27.2
 
 # AWS S3 & Object Storage
 boto3==1.34.0
@@ -23,12 +23,12 @@ redis==5.0.1
 aioredis==2.0.1
 
 # Validation & Serialization
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic==2.8.2
+pydantic-settings==2.4.0
 email-validator==2.1.0
 
 # Search & Text Processing
-asyncpg-stubs==0.28.0
+asyncpg-stubs==0.29.1
 
 # Monitoring & Logging
 structlog==23.2.0
@@ -36,7 +36,6 @@ sentry-sdk[fastapi]==1.38.0
 
 # Rate Limiting & Security
 slowapi==0.1.9
-python-limiter==3.3.1
 
 # File Processing
 aiofiles==23.2.1
@@ -46,7 +45,7 @@ python-magic==0.4.27
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
-httpx==0.25.2
+httpx==0.27.2
 factory-boy==3.3.0
 
 # Development Tools
@@ -69,7 +68,7 @@ python-dotenv==1.0.0
 fastapi-cors==0.0.6
 
 # JSON Schema Validation
-jsonschema==4.20.0
+jsonschema==4.23.0
 
 # Package Version Handling
 semantic-version==2.10.0
@@ -88,4 +87,4 @@ mkdocs-material==9.4.8
 
 # API specification and validation
 pyyaml==6.0.1
-requests==2.31.0 
+requests==2.32.3 

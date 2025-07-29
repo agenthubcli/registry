@@ -2,7 +2,7 @@
 Database connection and session management for AgentHub Registry.
 """
 
-import aioredis
+from redis import asyncio as aioredis
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base

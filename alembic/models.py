@@ -1,11 +1,6 @@
 """
 Standalone models for Alembic migrations.
-This file contains all model definitions without importing from the main app
-to avoid aioredis import issues.
 """
-
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     Boolean,

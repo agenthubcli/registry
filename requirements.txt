@@ -21,7 +21,6 @@ botocore==1.34.0
 
 # Caching & Performance
 redis==5.0.1
-aioredis==2.0.1
 
 # Validation & Serialization
 pydantic==2.8.2

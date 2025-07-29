@@ -5,7 +5,7 @@ Configuration settings for AgentHub Registry.
 import secrets
 from typing import List, Optional, Union
 
-from pydantic import AnyHttpUrl, EmailStr, Field, validator
+from pydantic import AnyHttpUrl, EmailStr, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
         description="Comma-separated list of allowed hosts"
     )
     
-    @validator("ALLOWED_HOSTS", pre=True)
+    @field_validator("ALLOWED_HOSTS", mode="before")
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]

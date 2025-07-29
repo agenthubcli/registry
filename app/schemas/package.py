@@ -10,7 +10,9 @@ from app.schemas.user import UserProfile
 
 
 # Enums
-class PackageTypeEnum(str):
+from enum import Enum
+
+class PackageTypeEnum(str, Enum):
     """Package type enumeration."""
     AGENT = "agent"
     TOOL = "tool"
@@ -63,8 +65,7 @@ class PackageVersion(PackageVersionBase):
     published_at: datetime
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class Package(PackageBase):
@@ -78,8 +79,7 @@ class Package(PackageBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PackageDetails(BaseModel):
@@ -89,8 +89,7 @@ class PackageDetails(BaseModel):
     versions: List[PackageVersion]
     latest_version: Optional[PackageVersion] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PackageVersionDetails(BaseModel):
@@ -99,8 +98,7 @@ class PackageVersionDetails(BaseModel):
     version: PackageVersion
     owner: UserProfile
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PackageVersions(BaseModel):
@@ -111,8 +109,7 @@ class PackageVersions(BaseModel):
     limit: int
     offset: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PackageStats(BaseModel):
@@ -124,8 +121,7 @@ class PackageStats(BaseModel):
     version_count: int
     latest_version: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SearchResults(BaseModel):
@@ -138,8 +134,7 @@ class SearchResults(BaseModel):
     package_type: Optional[PackageTypeEnum] = None
     sort_by: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class UserPackages(BaseModel):
@@ -150,8 +145,7 @@ class UserPackages(BaseModel):
     limit: int
     offset: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PublishSuccess(BaseModel):
@@ -160,8 +154,7 @@ class PublishSuccess(BaseModel):
     package: Package
     version: PackageVersion
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # Error Models
@@ -170,22 +163,24 @@ class ErrorResponse(BaseModel):
     detail: str = Field(..., description="Error message")
     error_code: Optional[str] = Field(None, description="Machine-readable error code")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "detail": "Package not found",
                 "error_code": "PACKAGE_NOT_FOUND"
             }
         }
+    }
 
 
 class MessageResponse(BaseModel):
     """Standard message response."""
     message: str = Field(..., description="Success message")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "message": "Operation completed successfully"
             }
-        } 
+        }
+    } 

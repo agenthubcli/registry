@@ -10,12 +10,13 @@ class OAuthUrl(BaseModel):
     """OAuth URL response."""
     oauth_url: HttpUrl = Field(..., description="GitHub OAuth authorization URL")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "oauth_url": "https://github.com/login/oauth/authorize?client_id=..."
             }
         }
+    }
 
 
 class RefreshRequest(BaseModel):
@@ -29,14 +30,15 @@ class TokenResponse(BaseModel):
     token_type: str = Field(default="bearer", description="Token type")
     expires_in: int = Field(..., description="Access token expiry in seconds")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
                 "token_type": "bearer",
                 "expires_in": 3600
             }
         }
+    }
 
 
 class AuthSuccess(TokenResponse):
@@ -44,8 +46,8 @@ class AuthSuccess(TokenResponse):
     refresh_token: str = Field(..., description="JWT refresh token")
     user: UserProfile
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
                 "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
@@ -65,4 +67,5 @@ class AuthSuccess(TokenResponse):
                     "created_at": "2023-01-01T00:00:00Z"
                 }
             }
-        } 
+        }
+    } 

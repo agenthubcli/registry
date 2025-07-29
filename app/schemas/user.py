@@ -21,9 +21,9 @@ class UserProfile(BaseModel):
     total_downloads: int = Field(default=0, description="Total downloads across all packages")
     created_at: datetime = Field(..., description="Account creation date")
 
-    class Config:
-        from_attributes = True
-        schema_extra = {
+    model_config = {
+        "from_attributes": True,
+        "json_schema_extra": {
             "example": {
                 "id": 123,
                 "github_username": "johndoe",
@@ -37,4 +37,5 @@ class UserProfile(BaseModel):
                 "total_downloads": 1234,
                 "created_at": "2023-01-01T00:00:00Z"
             }
-        } 
+        }
+    } 

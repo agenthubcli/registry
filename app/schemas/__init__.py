@@ -19,8 +19,8 @@ class HealthCheck(BaseModel):
     version: Optional[str] = Field(None, description="Service version")
     environment: Optional[str] = Field(None, description="Environment")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "status": "healthy",
                 "service": "agenthub-registry",
@@ -28,6 +28,7 @@ class HealthCheck(BaseModel):
                 "environment": "production"
             }
         }
+    }
 
 
 class ComponentHealth(BaseModel):
@@ -36,14 +37,15 @@ class ComponentHealth(BaseModel):
     message: Optional[str] = Field(None, description="Health status message")
     response_time_ms: Optional[float] = Field(None, description="Response time in milliseconds")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "status": "healthy",
                 "message": "Database connection successful",
                 "response_time_ms": 5.2
             }
         }
+    }
 
 
 class DetailedHealthCheck(BaseModel):
@@ -52,8 +54,8 @@ class DetailedHealthCheck(BaseModel):
     service: str = Field(..., description="Service name")
     checks: Dict[str, ComponentHealth] = Field(..., description="Individual component health checks")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "status": "healthy",
                 "service": "agenthub-registry",
@@ -76,6 +78,7 @@ class DetailedHealthCheck(BaseModel):
                 }
             }
         }
+    }
 
 
 class ApiInfo(BaseModel):
@@ -86,8 +89,8 @@ class ApiInfo(BaseModel):
     description: Optional[str] = Field(None, description="Service description")
     docs_url: Optional[str] = Field(None, description="Documentation URL")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "service": "AgentHub Registry",
                 "version": "1.0.0",
@@ -95,4 +98,5 @@ class ApiInfo(BaseModel):
                 "description": "Universal package registry for AI-native components",
                 "docs_url": "/docs"
             }
-        } 
+        }
+    } 

@@ -353,6 +353,38 @@ The API will be available at `http://localhost:8000` with interactive docs at `h
 
 ### Docker Setup
 
+#### Database Only (Recommended for Development)
+
+For local development, you can run just the PostgreSQL database using Docker Compose:
+
+```bash
+# Start the database
+docker-compose up -d
+
+# View database logs
+docker-compose logs db
+
+# Stop the database
+docker-compose down
+
+# Remove database and all data
+docker-compose down -v
+```
+
+The database will be available at `localhost:5432` with:
+
+- **Database**: `agenthub_registry`
+- **Username**: `username`
+- **Password**: `password`
+
+Your existing `DATABASE_URL` environment variable will work seamlessly:
+
+```
+DATABASE_URL=postgresql://username:password@localhost:5432/agenthub_registry
+```
+
+#### Full Application
+
 ```bash
 # Build and run with Docker Compose
 docker-compose up --build

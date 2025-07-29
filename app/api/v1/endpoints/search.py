@@ -11,14 +11,23 @@ from sqlalchemy.orm import joinedload
 from app.core.database import get_db
 from app.models.package import Package, PackageType, PackageStatus
 from app.core.config import settings
+from app.schemas.package import SearchResults, PackageTypeEnum, ErrorResponse
 
 router = APIRouter()
 
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=SearchResults,
+    responses={
+        422: {"model": ErrorResponse, "description": "Invalid search parameters"}
+    },
+    summary="Search packages",
+    description="Search for packages by name, description, or keywords"
+)
 async def search_packages(
-    q: str = Query(..., min_length=1, description="Search query"),
-    package_type: Optional[PackageType] = Query(None, description="Filter by package type"),
+    q: str = Query(..., min_length=1, max_length=500, description="Search query"),
+    package_type: Optional[PackageTypeEnum] = Query(None, description="Filter by package type"),
     limit: int = Query(20, ge=1, le=100, description="Number of results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip"),
     sort_by: str = Query("relevance", description="Sort by: relevance, downloads, created, updated"),
@@ -50,9 +59,9 @@ async def search_packages(
     
     # Filter by package type
     if package_type:
-        query = query.where(Package.package_type == package_type)
+        query = query.where(Package.package_type == package_type.value)
     
-    # Apply sorting
+    # Add sorting
     if sort_by == "downloads":
         query = query.order_by(desc(Package.total_downloads))
     elif sort_by == "created":
@@ -60,90 +69,86 @@ async def search_packages(
     elif sort_by == "updated":
         query = query.order_by(desc(Package.updated_at))
     else:  # relevance (default)
-        # For now, order by exact name matches first, then by downloads
-        query = query.order_by(
-            Package.name.ilike(f"{q}%").desc(),  # Exact prefix matches first
-            desc(Package.total_downloads)
-        )
+        # TODO: Implement relevance scoring
+        query = query.order_by(desc(Package.created_at))
+    
+    # Get total count (before pagination)
+    count_query = query
+    count_result = await db.execute(count_query)
+    total = len(count_result.scalars().all())
     
     # Apply pagination
-    query = query.offset(offset).limit(limit)
-    
-    # Include owner information
-    query = query.options(joinedload(Package.owner))
+    query = query.limit(limit).offset(offset)
     
     # Execute query
     result = await db.execute(query)
     packages = result.scalars().all()
     
-    # Get total count for pagination
-    count_query = select(func.count(Package.id)).where(
-        Package.status == PackageStatus.PUBLISHED
-    ).where(or_(*search_conditions))
-    
-    if package_type:
-        count_query = count_query.where(Package.package_type == package_type)
-    
-    count_result = await db.execute(count_query)
-    total_count = count_result.scalar()
-    
-    # Format results
-    results = []
-    for package in packages:
-        results.append({
-            **package.public_info,
-            "owner": package.owner.public_profile,
-        })
-    
-    return {
-        "results": results,
-        "total": total_count,
-        "limit": limit,
-        "offset": offset,
-        "query": q,
-        "package_type": package_type.value if package_type else None,
-        "sort_by": sort_by,
-    }
+    return SearchResults(
+        results=[package.public_info for package in packages],
+        total=total,
+        limit=limit,
+        offset=offset,
+        query=q,
+        package_type=package_type,
+        sort_by=sort_by
+    )
 
 
-@router.get("/popular")
+@router.get(
+    "/popular",
+    response_model=SearchResults,
+    summary="Get popular packages",
+    description="Get packages sorted by download count"
+)
 async def get_popular_packages(
-    package_type: Optional[PackageType] = Query(None, description="Filter by package type"),
+    package_type: Optional[PackageTypeEnum] = Query(None, description="Filter by package type"),
     limit: int = Query(20, ge=1, le=100, description="Number of results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get popular packages by download count."""
+    """Get popular packages sorted by download count."""
     
     query = select(Package).where(
         Package.status == PackageStatus.PUBLISHED
     ).order_by(desc(Package.total_downloads))
     
+    # Filter by package type
     if package_type:
-        query = query.where(Package.package_type == package_type)
+        query = query.where(Package.package_type == package_type.value)
     
-    query = query.limit(limit).options(joinedload(Package.owner))
+    # Get total count
+    count_result = await db.execute(query)
+    total = len(count_result.scalars().all())
     
+    # Apply pagination
+    query = query.limit(limit).offset(offset)
+    
+    # Execute query
     result = await db.execute(query)
     packages = result.scalars().all()
     
-    results = []
-    for package in packages:
-        results.append({
-            **package.public_info,
-            "owner": package.owner.public_profile,
-        })
-    
-    return {
-        "results": results,
-        "limit": limit,
-        "package_type": package_type.value if package_type else None,
-    }
+    return SearchResults(
+        results=[package.public_info for package in packages],
+        total=total,
+        limit=limit,
+        offset=offset,
+        query="",
+        package_type=package_type,
+        sort_by="downloads"
+    )
 
 
-@router.get("/recent")
+@router.get(
+    "/recent",
+    response_model=SearchResults,
+    summary="Get recent packages",
+    description="Get recently published packages"
+)
 async def get_recent_packages(
-    package_type: Optional[PackageType] = Query(None, description="Filter by package type"),
+    package_type: Optional[PackageTypeEnum] = Query(None, description="Filter by package type"),
     limit: int = Query(20, ge=1, le=100, description="Number of results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
     db: AsyncSession = Depends(get_db)
 ):
     """Get recently published packages."""
@@ -152,57 +157,71 @@ async def get_recent_packages(
         Package.status == PackageStatus.PUBLISHED
     ).order_by(desc(Package.created_at))
     
+    # Filter by package type
     if package_type:
-        query = query.where(Package.package_type == package_type)
+        query = query.where(Package.package_type == package_type.value)
     
-    query = query.limit(limit).options(joinedload(Package.owner))
+    # Get total count
+    count_result = await db.execute(query)
+    total = len(count_result.scalars().all())
     
+    # Apply pagination
+    query = query.limit(limit).offset(offset)
+    
+    # Execute query
     result = await db.execute(query)
     packages = result.scalars().all()
     
-    results = []
-    for package in packages:
-        results.append({
-            **package.public_info,
-            "owner": package.owner.public_profile,
-        })
-    
-    return {
-        "results": results,
-        "limit": limit,
-        "package_type": package_type.value if package_type else None,
-    }
+    return SearchResults(
+        results=[package.public_info for package in packages],
+        total=total,
+        limit=limit,
+        offset=offset,
+        query="",
+        package_type=package_type,
+        sort_by="created"
+    )
 
 
-@router.get("/trending")
+@router.get(
+    "/trending",
+    response_model=SearchResults,
+    summary="Get trending packages",
+    description="Get packages with high recent download activity"
+)
 async def get_trending_packages(
-    package_type: Optional[PackageType] = Query(None, description="Filter by package type"),
+    package_type: Optional[PackageTypeEnum] = Query(None, description="Filter by package type"),
     limit: int = Query(20, ge=1, le=100, description="Number of results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get trending packages (based on recent downloads)."""
+    """Get trending packages with high recent download activity."""
     
     query = select(Package).where(
         Package.status == PackageStatus.PUBLISHED
     ).order_by(desc(Package.download_count_last_30_days))
     
+    # Filter by package type
     if package_type:
-        query = query.where(Package.package_type == package_type)
+        query = query.where(Package.package_type == package_type.value)
     
-    query = query.limit(limit).options(joinedload(Package.owner))
+    # Get total count
+    count_result = await db.execute(query)
+    total = len(count_result.scalars().all())
     
+    # Apply pagination
+    query = query.limit(limit).offset(offset)
+    
+    # Execute query
     result = await db.execute(query)
     packages = result.scalars().all()
     
-    results = []
-    for package in packages:
-        results.append({
-            **package.public_info,
-            "owner": package.owner.public_profile,
-        })
-    
-    return {
-        "results": results,
-        "limit": limit,
-        "package_type": package_type.value if package_type else None,
-    } 
+    return SearchResults(
+        results=[package.public_info for package in packages],
+        total=total,
+        limit=limit,
+        offset=offset,
+        query="",
+        package_type=package_type,
+        sort_by="trending"
+    ) 

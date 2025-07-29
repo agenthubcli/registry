@@ -1,17 +1,17 @@
 """
-Package schemas for AgentHub Registry API.
+Package schemas for request/response serialization.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, HttpUrl
-from enum import Enum
 
-from app.schemas.user import UserPublic
+from app.schemas.user import UserProfile
 
 
-class PackageType(str, Enum):
-    """Supported package types."""
+# Enums
+class PackageTypeEnum(str):
+    """Package type enumeration."""
     AGENT = "agent"
     TOOL = "tool"
     CHAIN = "chain"
@@ -19,185 +19,173 @@ class PackageType(str, Enum):
     DATASET = "dataset"
 
 
-class PackageStatus(str, Enum):
-    """Package status."""
-    PENDING = "pending"
-    PUBLISHED = "published"
-    DEPRECATED = "deprecated"
-    SUSPENDED = "suspended"
-
-
-class VersionStatus(str, Enum):
-    """Package version status."""
-    DRAFT = "draft"
-    PUBLISHED = "published"
-    DEPRECATED = "deprecated"
-    YANKED = "yanked"
-
-
+# Base Models
 class PackageBase(BaseModel):
-    """Base package schema with common fields."""
-    name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    """Base package model."""
+    name: str = Field(..., pattern=r'^[a-z0-9]([a-z0-9\-])*[a-z0-9]$', min_length=1, max_length=214)
+    description: Optional[str] = Field(None, max_length=1000)
+    package_type: PackageTypeEnum
     homepage: Optional[HttpUrl] = None
     repository: Optional[HttpUrl] = None
     documentation: Optional[HttpUrl] = None
-    keywords: Optional[List[str]] = Field(default_factory=list)
-
-
-class PackageCreate(PackageBase):
-    """Schema for creating a new package."""
-    package_type: PackageType
-    is_private: bool = False
-    auto_publish: bool = False
-
-
-class PackageUpdate(BaseModel):
-    """Schema for updating package metadata."""
-    description: Optional[str] = None
-    homepage: Optional[HttpUrl] = None
-    repository: Optional[HttpUrl] = None
-    documentation: Optional[HttpUrl] = None
-    keywords: Optional[List[str]] = None
-    is_private: Optional[bool] = None
-    auto_publish: Optional[bool] = None
-
-
-class PackagePublic(BaseModel):
-    """Public package information schema."""
-    id: int
-    name: str
-    description: Optional[str] = None
-    package_type: str
-    latest_version: Optional[str] = None
-    total_downloads: int = 0
-    download_count_last_30_days: int = 0
-    created_at: datetime
-    updated_at: datetime
-    homepage: Optional[str] = None
-    repository: Optional[str] = None
     keywords: List[str] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
 
 
 class PackageVersionBase(BaseModel):
-    """Base package version schema."""
-    version: str = Field(..., min_length=1, max_length=50)
+    """Base package version model."""
+    version: str = Field(..., pattern=r'^[0-9]+\.[0-9]+\.[0-9]+([+-][a-zA-Z0-9\-\.]+)*$')
     description: Optional[str] = None
-    changelog: Optional[str] = None
-    runtime: Optional[str] = Field(None, max_length=50)
-    python_version: Optional[str] = Field(None, max_length=50)
-    is_prerelease: bool = False
-
-
-class PackageVersionCreate(PackageVersionBase):
-    """Schema for creating a new package version."""
-    manifest: Dict[str, Any]
-
-
-class PackageVersionPublic(BaseModel):
-    """Public package version information schema."""
-    id: int
-    version: str
-    description: Optional[str] = None
-    download_count: int = 0
-    download_count_last_30_days: int = 0
-    file_size: int
-    file_hash_sha256: str
     is_prerelease: bool = False
     runtime: Optional[str] = None
     python_version: Optional[str] = None
-    published_at: Optional[datetime] = None
+
+
+# Request Models
+class PackageCreate(PackageBase):
+    """Package creation request."""
+    pass
+
+
+class PackageVersionCreate(PackageVersionBase):
+    """Package version creation request."""
+    pass
+
+
+# Response Models
+class PackageVersion(PackageVersionBase):
+    """Package version response model."""
+    id: int
+    download_count: int
+    file_size: int = Field(..., description="File size in bytes")
+    file_hash_sha256: str
+    download_url: HttpUrl
+    manifest: Optional[Dict[str, Any]] = None
+    published_at: datetime
     created_at: datetime
-    download_url: str
-    manifest: Dict[str, Any]
 
     class Config:
         from_attributes = True
 
 
-class PackageVersionDetail(PackageVersionPublic):
-    """Detailed package version information schema."""
-    changelog: Optional[str] = None
-    filename: str
-    status: str
-    virus_scan_status: str
-    vulnerability_scan_status: str
-    is_validated: bool
-    yanked_at: Optional[datetime] = None
-    yanked_reason: Optional[str] = None
+class Package(PackageBase):
+    """Package response model."""
+    id: int
+    latest_version: Optional[str] = None
+    total_downloads: int
+    download_count_last_30_days: int
+    version_count: int
+    owner: UserProfile
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
 
 
-class PackageDetail(PackagePublic):
-    """Detailed package information schema."""
-    normalized_name: str
-    readme: Optional[str] = None
-    documentation: Optional[str] = None
-    status: str
-    is_private: bool
-    auto_publish: bool
-    version_count: int = 0
-    latest_version_published_at: Optional[datetime] = None
-    owner: UserPublic
-    versions: List[PackageVersionPublic] = Field(default_factory=list)
-    latest_version_info: Optional[PackageVersionPublic] = None
+class PackageDetails(BaseModel):
+    """Detailed package information with versions."""
+    package: Package
+    owner: UserProfile
+    versions: List[PackageVersion]
+    latest_version: Optional[PackageVersion] = None
 
     class Config:
         from_attributes = True
 
 
-class PackageSearch(BaseModel):
-    """Package search request schema."""
-    q: str = Field(..., min_length=1, description="Search query")
-    package_type: Optional[PackageType] = Field(None, description="Filter by package type")
-    limit: int = Field(20, ge=1, le=100, description="Number of results to return")
-    offset: int = Field(0, ge=0, description="Number of results to skip")
-    sort_by: str = Field("relevance", description="Sort by: relevance, downloads, created, updated")
-
-
-class PackageSearchResultItem(PackagePublic):
-    """Individual package search result."""
-    owner: UserPublic
+class PackageVersionDetails(BaseModel):
+    """Detailed package version information."""
+    package: Package
+    version: PackageVersion
+    owner: UserProfile
 
     class Config:
         from_attributes = True
 
 
-class PackageSearchResult(BaseModel):
-    """Package search response schema."""
-    results: List[PackageSearchResultItem]
+class PackageVersions(BaseModel):
+    """Package versions list response."""
+    package_name: str
+    versions: List[PackageVersion]
     total: int
     limit: int
     offset: int
-    query: str
-    package_type: Optional[str] = None
-    sort_by: str
-
-
-class PackageStats(BaseModel):
-    """Package statistics schema."""
-    package_name: str
-    total_downloads: int
-    downloads_last_30_days: int
-    version_count: int
-    # Additional stats can be added here
 
     class Config:
         from_attributes = True
 
 
-class PackagePublishRequest(BaseModel):
-    """Package publish request schema."""
-    package_type: PackageType
+class PackageStats(BaseModel):
+    """Package statistics response."""
+    package_name: str
+    total_downloads: int
+    downloads_last_30_days: int
+    downloads_last_7_days: int
+    version_count: int
+    latest_version: str
+
+    class Config:
+        from_attributes = True
 
 
-class PackagePublishResponse(BaseModel):
-    """Package publish response schema."""
-    message: str
-    package: PackagePublic
-    version: PackageVersionPublic 
+class SearchResults(BaseModel):
+    """Search results response."""
+    results: List[Package]
+    total: int = Field(..., description="Total number of matching packages")
+    limit: int
+    offset: int
+    query: str
+    package_type: Optional[PackageTypeEnum] = None
+    sort_by: str
+
+    class Config:
+        from_attributes = True
+
+
+class UserPackages(BaseModel):
+    """User packages response."""
+    username: str
+    packages: List[Package]
+    total_packages: int
+    limit: int
+    offset: int
+
+    class Config:
+        from_attributes = True
+
+
+class PublishSuccess(BaseModel):
+    """Package publish success response."""
+    message: str = "Package published successfully"
+    package: Package
+    version: PackageVersion
+
+    class Config:
+        from_attributes = True
+
+
+# Error Models
+class ErrorResponse(BaseModel):
+    """Standard error response."""
+    detail: str = Field(..., description="Error message")
+    error_code: Optional[str] = Field(None, description="Machine-readable error code")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "detail": "Package not found",
+                "error_code": "PACKAGE_NOT_FOUND"
+            }
+        }
+
+
+class MessageResponse(BaseModel):
+    """Standard message response."""
+    message: str = Field(..., description="Success message")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "message": "Operation completed successfully"
+            }
+        } 

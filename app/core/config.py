@@ -116,6 +116,10 @@ class Settings(BaseSettings):
     ENABLE_PRIVATE_PACKAGES: bool = Field(default=False, env="ENABLE_PRIVATE_PACKAGES")
     ENABLE_PACKAGE_MIRRORING: bool = Field(default=False, env="ENABLE_PACKAGE_MIRRORING")
     
+    # API Documentation
+    ENABLE_DOCS: bool = Field(default=True, env="ENABLE_DOCS")
+    DOCS_REQUIRE_AUTH: bool = Field(default=False, env="DOCS_REQUIRE_AUTH")
+    
     # Security & Scanning
     ENABLE_VIRUS_SCANNING: bool = Field(default=True, env="ENABLE_VIRUS_SCANNING")
     ENABLE_VULNERABILITY_SCANNING: bool = Field(default=True, env="ENABLE_VULNERABILITY_SCANNING")

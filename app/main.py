@@ -20,12 +20,14 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from fastapi.openapi.utils import get_openapi
 
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.database import create_tables, get_redis_connection
 from app.core.logging import setup_logging
 from app.middleware.security import SecurityHeadersMiddleware
+from app.schemas import HealthCheck, ApiInfo
 
 # Metrics
 request_count = Counter(
@@ -88,11 +90,79 @@ def create_application() -> FastAPI:
         title=settings.PROJECT_NAME,
         description=settings.PROJECT_DESCRIPTION,
         version=settings.VERSION,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.ENVIRONMENT != "production" else None,
-        docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
-        redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
+        openapi_url=f"{settings.API_V1_STR}/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
         lifespan=lifespan,
+        contact={
+            "name": "AgentHub Team",
+            "url": "https://github.com/agenthubcli/registry",
+        },
+        license_info={
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT",
+        },
+        servers=[
+            {
+                "url": "https://registry.agenthubcli.com",
+                "description": "Production server"
+            },
+            {
+                "url": "http://localhost:8000", 
+                "description": "Development server"
+            }
+        ],
+        # OpenAPI security configuration
+        openapi_tags=[
+            {
+                "name": "authentication",
+                "description": "GitHub OAuth and JWT token management"
+            },
+            {
+                "name": "packages", 
+                "description": "Package publishing, management, and downloads"
+            },
+            {
+                "name": "search",
+                "description": "Package discovery and search functionality"
+            },
+            {
+                "name": "users",
+                "description": "User profiles and package ownership"
+            },
+            {
+                "name": "health",
+                "description": "Service health and monitoring"
+            }
+        ]
     )
+    
+    # Configure OpenAPI security schemes
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+        
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+        )
+        
+        # Add security schemes
+        openapi_schema["components"]["securitySchemes"] = {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT token obtained via GitHub OAuth"
+            }
+        }
+        
+        app.openapi_schema = openapi_schema
+        return app.openapi_schema
+
+    app.openapi = custom_openapi
     
     # Add rate limiting
     app.state.limiter = limiter
@@ -165,10 +235,15 @@ def create_application() -> FastAPI:
     app.mount("/static", StaticFiles(directory="static"), name="static")
     
     # Health check endpoint
-    @app.get("/health", tags=["health"])
+    @app.get("/health", response_model=HealthCheck, tags=["health"])
     async def health_check():
         """Health check endpoint."""
-        return {"status": "healthy", "service": "agenthub-registry"}
+        return HealthCheck(
+            status="healthy", 
+            service="agenthub-registry",
+            version=settings.VERSION,
+            environment=settings.ENVIRONMENT
+        )
     
     # Metrics endpoint
     @app.get("/metrics", tags=["monitoring"])
@@ -184,16 +259,16 @@ def create_application() -> FastAPI:
         return FileResponse("static/index.html")
     
     # API info endpoint
-    @app.get("/api", tags=["root"])
+    @app.get("/api", response_model=ApiInfo, tags=["root"])
     async def api_info():
         """API information."""
-        return {
-            "service": settings.PROJECT_NAME,
-            "version": settings.VERSION,
-            "description": settings.PROJECT_DESCRIPTION,
-            "api_version": "v1",
-            "docs_url": "/docs" if settings.ENVIRONMENT != "production" else None,
-        }
+        return ApiInfo(
+            service=settings.PROJECT_NAME,
+            version=settings.VERSION,
+            description=settings.PROJECT_DESCRIPTION,
+            api_version="v1",
+            docs_url="/docs" if settings.ENABLE_DOCS else None
+        )
     
     return app
 

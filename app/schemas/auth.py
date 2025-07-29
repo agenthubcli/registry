@@ -1,47 +1,68 @@
 """
-Authentication schemas for AgentHub Registry API.
+Authentication schemas for request/response serialization.
 """
 
-from typing import Optional
-from pydantic import BaseModel
-
-from app.schemas.user import UserPublic
+from pydantic import BaseModel, Field, HttpUrl
+from app.schemas.user import UserProfile
 
 
-class TokenData(BaseModel):
-    """JWT token payload data schema."""
-    user_id: int
-    username: str
-    exp: Optional[int] = None  # Expiration timestamp
-    iat: Optional[int] = None  # Issued at timestamp
-    token_type: str = "access"  # "access" or "refresh"
+class OAuthUrl(BaseModel):
+    """OAuth URL response."""
+    oauth_url: HttpUrl = Field(..., description="GitHub OAuth authorization URL")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "oauth_url": "https://github.com/login/oauth/authorize?client_id=..."
+            }
+        }
+
+
+class RefreshRequest(BaseModel):
+    """Token refresh request."""
+    refresh_token: str = Field(..., description="JWT refresh token")
 
 
 class TokenResponse(BaseModel):
-    """Token response schema for OAuth callbacks and refresh."""
-    access_token: str
-    refresh_token: Optional[str] = None
-    token_type: str = "bearer"
-    expires_in: Optional[int] = None  # Token expiration in seconds
-    user: Optional[UserPublic] = None
+    """Token response."""
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(..., description="Access token expiry in seconds")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                "token_type": "bearer",
+                "expires_in": 3600
+            }
+        }
 
 
-class OAuthCallback(BaseModel):
-    """OAuth callback parameters schema."""
-    code: str
-    state: Optional[str] = None
+class AuthSuccess(TokenResponse):
+    """Authentication success response."""
+    refresh_token: str = Field(..., description="JWT refresh token")
+    user: UserProfile
 
-
-class RefreshTokenRequest(BaseModel):
-    """Refresh token request schema."""
-    refresh_token: str
-
-
-class GitHubOAuthInitiate(BaseModel):
-    """GitHub OAuth initiation response schema."""
-    oauth_url: str
-
-
-class LogoutResponse(BaseModel):
-    """Logout response schema."""
-    message: str = "Logged out successfully" 
+    class Config:
+        schema_extra = {
+            "example": {
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": {
+                    "id": 123,
+                    "github_username": "johndoe",
+                    "display_name": "John Doe",
+                    "github_avatar_url": "https://github.com/avatars/johndoe",
+                    "bio": "AI researcher and developer",
+                    "website": "https://johndoe.dev",
+                    "location": "San Francisco, CA",
+                    "company": "AI Company Inc.",
+                    "total_packages": 5,
+                    "total_downloads": 1234,
+                    "created_at": "2023-01-01T00:00:00Z"
+                }
+            }
+        } 

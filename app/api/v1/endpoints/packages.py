@@ -21,7 +21,6 @@ from app.schemas.package import (
     PackageDetails, PackageVersions, PackageVersionDetails, PackageStats,
     PublishSuccess, ErrorResponse, MessageResponse, PackageTypeEnum
 )
-from app.schemas.user import UserPackages
 
 router = APIRouter()
 
@@ -168,7 +167,7 @@ async def get_package_version(
 
 @router.get(
     "/{package_name}/{version}/download",
-    response_model=StreamingResponse,
+    response_model=None,
     responses={
         404: {"model": ErrorResponse, "description": "Package or version not found"}
     },
